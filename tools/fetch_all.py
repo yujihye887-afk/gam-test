@@ -124,6 +124,14 @@ SOURCES: list[tuple[str, str, str]] = [
      "?format=geojson&starttime=2000-01-01&endtime=2024-12-31"
      "&minmagnitude=3.0&minlatitude=33&maxlatitude=39.5"
      "&minlongitude=124&maxlongitude=132&limit=20000"),
+
+    # 공공데이터포털 파일은 atchFileId 로 받는다. 기관이 파일을 새로 올리면 이 번호가 바뀌어
+    # 옛 파일이 그대로 오거나 404 가 난다. 그때는 아래 페이지에서 번호를 다시 찾는다.
+    # https://www.data.go.kr/data/15103608/fileData.do
+    ("gunsan_visitors.csv",
+     "군산시 관광지점 월별 관광객수 2023~2025 (공공데이터포털 · 전북특별자치도 군산시)",
+     "https://www.data.go.kr/cmm/cmm/fileDownload.do"
+     "?atchFileId=FILE_000000003585043&fileDetailSn=1"),
 ]
 
 

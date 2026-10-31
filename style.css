@@ -301,7 +301,46 @@ html.on-home body {
 #view-home .tcard:nth-child(6n+4) { --c-bg: #e6fae3; --c-line: #a9e3a0; --c-balloon: #4fc263; }
 #view-home .tcard:nth-child(6n+5) { --c-bg: #e2f2ff; --c-line: #9fd0f5; --c-balloon: #3d9ff0; }
 #view-home .tcard:nth-child(6n)   { --c-bg: #f1e6ff; --c-line: #cdb0f5; --c-balloon: #a374f0; }
-#view-home .balloon { display: block; width: 34px; height: 51px; color: var(--c-balloon); }
+#view-home .balloon {
+  display: block; width: 34px; height: 51px; color: var(--c-balloon); overflow: visible;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, .12));
+  animation: float 3.4s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.53s);
+}
+#view-home .balloon .string {
+  transform-box: view-box; transform-origin: 20px 45px;
+  animation: wiggle 1.7s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i, 0) * -0.31s);
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50%      { transform: translateY(-7px) rotate(4deg); }
+}
+@keyframes wiggle { from { transform: skewX(-9deg); } to { transform: skewX(9deg); } }
+#view-home .temoji { align-self: flex-start; transition: transform .25s cubic-bezier(.3, 1.6, .5, 1); }
+#view-home .tcard:hover .temoji,
+#view-home .tcard:focus-visible .temoji { transform: translateY(-6px) scale(1.12); }
+
+/* 내가 만든 주제: 은색 카드 · 은색 풍선 · 가끔 지나가는 광택 */
+#view-home .tcard.mine {
+  --c-bg: linear-gradient(135deg, #f6f8fa 0%, #dde2e8 40%, #f9fafb 55%, #c8cfd8 100%);
+  --c-line: #a9b2bd; --c-balloon: #b3bcc7;
+  overflow: hidden;
+}
+#view-home .tcard.mine::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .8) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: sheen 3.8s ease-in-out infinite;
+}
+@keyframes sheen {
+  0%, 55%   { transform: translateX(-120%); }
+  85%, 100% { transform: translateX(120%); }
+}
+#view-home .tcard.mine .balloon .shine { opacity: .9; }
+#view-home .tcard.mine .balloon .shade { opacity: .24; }
+#view-home .tcard.mine.done { border-color: var(--ok); }
 #view-home .tcard:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--c-line); }
 #view-home .tcard.done { border-color: var(--ok); }
 #view-home .temoji { font-size: 44px; }

@@ -7,13 +7,18 @@
 const $ = (id) => document.getElementById(id);
 
 // 주제 카드 아이콘. 색은 카드마다 CSS의 --c-balloon이 정한다.
+// 그라디언트는 id가 겹치면 첫 풍선 색으로 통일돼 버려서, 그늘·빛은 반투명 도형으로 얹는다
 const BALLOON =
   `<svg class="balloon" viewBox="0 0 40 60" aria-hidden="true">` +
-  `<path d="M20 44 C18 50 23 53 20 59" fill="none" stroke="#8a7a9e" stroke-width="1.5"/>` +
-  `<path d="M17 45 L23 45 L20 41 Z" fill="currentColor"/>` +
-  `<ellipse cx="20" cy="22" rx="16" ry="20" fill="currentColor"/>` +
-  `<ellipse cx="13" cy="14" rx="4" ry="6.5" fill="#fff" opacity=".55" transform="rotate(-20 13 14)"/>` +
+  `<path class="string" d="M20 45 C17 50 23 54 20 59" fill="none" stroke="#8a7a9e" stroke-width="1.5" stroke-linecap="round"/>` +
+  `<path d="M17.5 46 L22.5 46 L20 42.5 Z" fill="currentColor"/>` +
+  `<path d="M20 2 C30 2 36 10 36 20 C36 32 27 41 20 43 C13 41 4 32 4 20 C4 10 10 2 20 2 Z" fill="currentColor"/>` +
+  `<path class="shade" d="M29 7 C36 13 37 26 31 35 C27 40 23 42 20 43 C26 37 31 28 29 7 Z" fill="#000" opacity=".14"/>` +
+  `<ellipse class="shine" cx="13" cy="13" rx="3.6" ry="6.5" fill="#fff" opacity=".6" transform="rotate(-25 13 13)"/>` +
+  `<circle cx="11.5" cy="22.5" r="1.4" fill="#fff" opacity=".5"/>` +
   `</svg>`;
+// 내가 만든 주제. 홈 화면에서 은색 카드로 보인다
+const MINE = "gunsan-travel";
 const views = { home: $("view-home"), quiz: $("view-quiz"), result: $("view-result") };
 
 let INDEX = null;     // topics.json
@@ -113,9 +118,10 @@ function renderGrid() {
   $("progress-note").textContent =
     n ? `${INDEX.topics.length}개 중 ${n}개 풀었습니다` : "";
   $("topic-grid").innerHTML = "";
-  INDEX.topics.forEach((t) => {
+  INDEX.topics.forEach((t, i) => {
     const b = document.createElement("button");
-    b.className = "tcard" + (t.id in done ? " done" : "");
+    b.className = "tcard" + (t.id === MINE ? " mine" : "") + (t.id in done ? " done" : "");
+    b.style.setProperty("--i", i);   // 풍선이 한꺼번에 같이 흔들리지 않게 시간차를 준다
     b.innerHTML =
       `<span class="temoji">${BALLOON}</span>` +
       `<span class="ttitle">${t.title}</span>` +

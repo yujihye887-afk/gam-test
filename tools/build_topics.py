@@ -716,6 +716,107 @@ topic(
            f"적설과 다르게 나옵니다. 여기서 '눈 온 날'은 하루 강설량 {SNOW_DAY:.0f}cm "
            "이상인 날만 셌습니다.")
 
+# ── 12. 군산 관광지 ──────────────────────────────────────────────
+# 원본은 2023~2025년이지만 문항은 2024~2025년만 쓴다.
+# 2025년은 12월 칸이 비어 있다(자료 기준일까지 11월분만 올라왔다). 그래서 두 해를
+# 달별로 더하는 문항은 두 해 모두 값이 있는 달만 센다.
+# 연간 합계를 묻는 문항은 원본의 '합계' 칸을 그대로 쓴다. 그런데 이 칸은 해마다
+# 더한 범위가 다르다 — 2023년은 1~12월, 2024년은 12월 값이 있는데도 1~11월만 더했다.
+# 그래서 근거에는 합계가 몇 월까지의 합인지를 원본에서 찾아 적는다.
+GS = load_csv("gunsan_visitors.csv")
+
+
+def g_row(name, year):
+    return next(r for r in GS if r["관광지"] == name and r["년도"] == f"{year}년")
+
+
+def g_months(name, year):
+    """값이 있는 달만 {월: 방문객} 으로."""
+    r = g_row(name, year)
+    return {m: int(r[f"{m}월"]) for m in range(1, 13) if r[f"{m}월"].strip()}
+
+
+def g_sum2(name):
+    """2024·2025년 같은 달끼리 더한다. 한 해라도 값이 없는 달은 뺀다."""
+    a, b = g_months(name, 2024), g_months(name, 2025)
+    return {m: a[m] + b[m] for m in a if m in b}
+
+
+def g_total(name, year):
+    """원본 '합계' 칸과, 그 값이 1월부터 몇 월까지의 합인지."""
+    r = g_row(name, year)
+    total, m = int(r["합계"]), g_months(name, year)
+    upto = next(k for k in range(1, 13)
+                if all(i in m for i in range(1, k + 1))
+                and sum(m[i] for i in range(1, k + 1)) == total)
+    return total, upto
+
+
+def g_dropped(d):
+    gone = [m for m in range(1, 13) if m not in d]
+    return (f", {'·'.join(f'{m}월' for m in gone)}은 2025년 자료가 없어 뺌"
+            if gone else "")
+
+
+rail = g_months("경암동철길마을", 2024)
+rail_top = max(rail, key=rail.get)
+# 2번은 1년치를 묻는다. 합계 칸(1~11월)을 쓰지 않고 1~12월 월별 값을 직접 더한다
+museum_m = g_months("군산근대역사박물관", 2024)
+assert len(museum_m) == 12, "군산근대역사박물관 2024년 월별 값이 12개가 아닙니다"
+museum = sum(museum_m.values())
+museum_box, museum_box_upto = g_total("군산근대역사박물관", 2024)
+museum_days = (dt.date(2025, 1, 1) - dt.date(2024, 1, 1)).days
+conv = g_sum2("군산새만금컨벤션센터")
+conv_top = max(conv, key=conv.get)
+golf = g_sum2("군산컨트리클럽")
+golf_low = min(golf, key=golf.get)
+park24, park_upto24 = g_total("은파호수공원", 2024)
+park25, park_upto25 = g_total("은파호수공원", 2025)
+park_ratio = park25 / park24
+g_last25 = max(max(g_months(r["관광지"], 2025), default=0)
+               for r in GS if r["년도"] == "2025년")
+g_upto24 = g_total("경암동철길마을", 2024)[1]
+g_spots = len({r["관광지"] for r in GS if r["년도"] == "2024년"})
+
+topic(
+    "gunsan-travel", "🧳", "군산 관광지",
+    f"2024~2025년, 군산 주요 관광지 {g_spots}곳의 월별 방문객",
+    "공공데이터포털 (전북특별자치도 군산시)",
+    "https://www.data.go.kr/data/15103608/fileData.do",
+    [
+        choice("g1", "2024년 경암동철길마을 방문객이 가장 많았던 달은?",
+               ["2월", "5월", "8월", "10월"], f"{rail_top}월",
+               f"2024년 {min(rail)}~{max(rail)}월의 월별 방문객을 비교하면 가장 많은 "
+               f"달은 {rail_top}월 {rail[rail_top]:,}명",
+               "관광지가 붐비는 달은 날씨 좋은 계절과 꼭 같지 않습니다."),
+        slider("g2", "2024년 군산근대역사박물관 방문객은 몇 명일까요?",
+               museum, "명", 100000, 1000000, 10000,
+               f"원본 2024년 1~12월 월별 방문객을 더하면 {museum:,}명이며, 원본 합계 칸"
+               f"({museum_box:,}명)은 1~{museum_box_upto}월만 더한 값이라 쓰지 않음 "
+               f"(하루 평균 약 {museum / museum_days:,.0f}명)",
+               "연간 방문객은 숫자가 커서 감이 잘 안 옵니다. 하루로 나눠 보면 "
+               "체감과 맞는지 확인할 수 있습니다."),
+        choice("g3", "새만금컨벤션센터 방문객이 유난히 많은 달은?",
+               ["4월", "5월", "9월", "10월"], f"{conv_top}월",
+               f"2024·2025년 월별 방문객을 같은 달끼리 더하면 가장 많은 달은 "
+               f"{conv_top}월 {conv[conv_top]:,}명{g_dropped(conv)}",
+               "행사장은 계절보다 큰 행사가 열리는 달에 사람이 몰립니다."),
+        choice("g4", "군산컨트리클럽 방문객이 가장 적은 달은?",
+               ["1월", "2월", "7월", "8월"], f"{golf_low}월",
+               f"2024·2025년 월별 방문객을 같은 달끼리 더하면 가장 적은 달은 "
+               f"{golf_low}월 {golf[golf_low]:,}명{g_dropped(golf)}",
+               "골프장은 날씨를 많이 탑니다. 한여름보다 한겨울이 더 비어 있습니다."),
+        slider("g5", "2024년 대비 2025년 은파호수공원 방문객은 몇 배일까요?",
+               park_ratio, "배", 0.5, 3.0, 0.1,
+               f"원본 합계 칸 2024년 {park24:,}명(1~{park_upto24}월) → 2025년 "
+               f"{park25:,}명(1~{park_upto25}월)으로 {park_ratio:.2f}배",
+               "같은 공원도 한 해 사이에 방문객이 크게 달라질 수 있습니다."),
+    ],
+    caveat=f"같은 군산시 원본 안에서도 2024년 '합계' 칸은 12월을 뺀 1~{g_upto24}월 값이라 "
+           f"이 퀴즈가 월별 값을 더한 1년치와 다르고(군산근대역사박물관 {museum_box:,}명 대 "
+           f"{museum:,}명), 2025년은 {g_last25}월까지만 있으며, 출처에 수집 방법이 적혀 "
+           "있지 않아 입구가 없는 무료 관광지의 수는 센 값인지 추정값인지 알 수 없습니다.")
+
 
 # ════════════════════════════════════════════════════════════════
 def main() -> None:
